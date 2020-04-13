@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -16,13 +17,6 @@ func initDB() *gormdb {
 	db := &gormdb{}
 	db.init()
 	return db
-}
-
-func setupTestCase(t *testing.T) func(t *testing.T) {
-	t.Log("setup test case")
-	return func(t *testing.T) {
-		t.Log("teardown test case")
-	}
 }
 
 func Test_init(t *testing.T) {
@@ -48,10 +42,23 @@ func Test_createItem(t *testing.T) {
 	db := initDB()
 	defer db.close()
 
-	item := db.createItem(Item{Description: "test_description", Completed: false})
+	item, err := db.createItem(Item{Description: "test_description", Completed: false})
 
+	assert.NoError(t, err)
 	assert.Equal(t, uint(1), item.Id)
 	assert.Equal(t, "test_description", item.Description)
+	assert.Equal(t, false, item.Completed)
+}
+
+func Test_createItem_db_error(t *testing.T) {
+	db := initDB()
+	db.close()
+
+	item, err := db.createItem(Item{Description: "test_description", Completed: false})
+
+	assert.EqualError(t, err, "sql: database is closed")
+	assert.Equal(t, uint(0), item.Id)
+	assert.Equal(t, "", item.Description)
 	assert.Equal(t, false, item.Completed)
 }
 
@@ -59,7 +66,7 @@ func Test_updateItem(t *testing.T) {
 	db := initDB()
 	defer db.close()
 
-	createdItem := db.createItem(Item{Description: "test_description", Completed: false})
+	createdItem, _ := db.createItem(Item{Description: "test_description", Completed: false})
 	update := Item{Description: "updated description", Completed: true}
 	item, err := db.updateItem(createdItem.Id, update)
 
@@ -76,7 +83,21 @@ func Test_updateItem_not_exists(t *testing.T) {
 	update := Item{Description: "updated description", Completed: true}
 	item, err := db.updateItem(1234, update)
 
-	assert.EqualError(t, err, "item id does not exist")
+	var e *ErrorItemNotFound;
+	assert.True(t, errors.As(err, &e))
+	assert.Equal(t, uint(0), item.Id)
+	assert.Equal(t, "", item.Description)
+	assert.Equal(t, false, item.Completed)
+}
+
+func Test_updateItem_db_error(t *testing.T) {
+	db := initDB()
+	db.close()
+
+	update := Item{Description: "updated description", Completed: true}
+	item, err := db.updateItem(1234, update)
+
+	assert.EqualError(t, err, "sql: database is closed")
 	assert.Equal(t, uint(0), item.Id)
 	assert.Equal(t, "", item.Description)
 	assert.Equal(t, false, item.Completed)
@@ -86,11 +107,12 @@ func Test_deleteItem(t *testing.T) {
 	db := initDB()
 	defer db.close()
 
-	createdItem := db.createItem(Item{Description: "test_description", Completed: false})
+	createdItem, _ := db.createItem(Item{Description: "test_description", Completed: false})
 	err := db.deleteItem(createdItem.Id)
 	assert.NoError(t, err)
 	item, err := db.getItem(createdItem.Id)
-	assert.EqualError(t, err, "item id does not exist")
+	var e *ErrorItemNotFound;
+	assert.True(t, errors.As(err, &e))
 	assert.Equal(t, uint(0), item.Id)
 	assert.Equal(t, "", item.Description)
 	assert.Equal(t, false, item.Completed)
@@ -101,14 +123,23 @@ func Test_deleteItem_not_exists(t *testing.T) {
 	defer db.close()
 
 	err := db.deleteItem(1327)
-	assert.EqualError(t, err, "item id does not exist")
+	var e *ErrorItemNotFound;
+	assert.True(t, errors.As(err, &e))
+}
+
+func Test_deleteItem_db_error(t *testing.T) {
+	db := initDB()
+	db.close()
+
+	err := db.deleteItem(1327)
+	assert.EqualError(t, err, "sql: database is closed")
 }
 
 func Test_getItem(t *testing.T) {
 	db := initDB()
 	defer db.close()
 
-	createdItem := db.createItem(Item{Description: "test_description", Completed: false})
+	createdItem, _ := db.createItem(Item{Description: "test_description", Completed: false})
 	item, err := db.getItem(createdItem.Id)
 	assert.NoError(t, err)
 	assert.Equal(t, uint(1), item.Id)
@@ -121,7 +152,18 @@ func Test_getItem_not_exists(t *testing.T) {
 	defer db.close()
 
 	item, err := db.getItem(1327)
-	assert.EqualError(t, err, "item id does not exist")
+	var e *ErrorItemNotFound;
+	assert.True(t, errors.As(err, &e))
+	assert.Equal(t, uint(0), item.Id)
+	assert.Equal(t, "", item.Description)
+	assert.Equal(t, false, item.Completed)
+}
+
+func Test_getItem_db_error(t *testing.T) {
+	db := initDB()
+	db.close()
+	item, err := db.getItem(1327)
+	assert.EqualError(t, err, "sql: database is closed")
 	assert.Equal(t, uint(0), item.Id)
 	assert.Equal(t, "", item.Description)
 	assert.Equal(t, false, item.Completed)
@@ -134,7 +176,10 @@ func Test_allItems(t *testing.T) {
 	db.createItem(Item{Description: "A", Completed: false})
 	db.createItem(Item{Description: "B", Completed: true})
 	db.createItem(Item{Description: "C", Completed: false})
-	items  := db.allItems()
+
+	items, err := db.allItems()
+
+	assert.NoError(t, err)
 	assert.Equal(t, 3, len(items))
 	assert.Equal(t, uint(1), items[0].Id)
 	assert.Equal(t, "A", items[0].Description)
@@ -147,4 +192,15 @@ func Test_allItems(t *testing.T) {
 	assert.Equal(t, false, items[2].Completed)
 }
 
+func Test_allItems_db_error(t *testing.T) {
+	db := initDB()
+	db.close()
+
+	db.createItem(Item{Description: "A", Completed: false})
+	db.createItem(Item{Description: "B", Completed: true})
+	db.createItem(Item{Description: "C", Completed: false})
+	items, err := db.allItems()
+	assert.EqualError(t, err, "sql: database is closed")
+	assert.Equal(t, 0, len(items))
+}
 

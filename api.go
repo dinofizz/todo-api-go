@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -29,15 +30,23 @@ func (a *Application) getToDoItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	item, err := a.db.getItem(uint(id))
-	if err != nil {
+	var e *ErrorItemNotFound
+	if errors.As(err, &e) {
 		respondWithError(w, http.StatusNotFound, "item not found")
+		return
+	} else if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Database error occurred")
 		return
 	}
 	respondWithJSON(w, http.StatusOK, item)
 }
 
 func (a *Application) getAllToDoItems(w http.ResponseWriter, r *http.Request) {
-	items := a.db.allItems()
+	items, err := a.db.allItems()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Database error occurred")
+		return
+	}
 	respondWithJSON(w, http.StatusOK, items)
 }
 
@@ -50,8 +59,13 @@ func (a *Application) deleteToDoItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = a.db.deleteItem(uint(id))
-	if err != nil {
+
+	var e *ErrorItemNotFound
+	if errors.As(err, &e) {
 		respondWithError(w, http.StatusNotFound, "item not found")
+		return
+	} else if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Database error occurred")
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
@@ -73,8 +87,12 @@ func (a *Application) updateToDoItem(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	updatedItem, err := a.db.updateItem(uint(id), td)
-	if err != nil {
+	var e *ErrorItemNotFound
+	if errors.As(err, &e) {
 		respondWithError(w, http.StatusNotFound, "item not found")
+		return
+	} else if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Database error occurred")
 		return
 	}
 	respondWithJSON(w, http.StatusOK, updatedItem)
@@ -89,7 +107,11 @@ func (a *Application) createTodoItem(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	td = a.db.createItem(td)
+	td, err := a.db.createItem(td)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Database error occurred")
+		return
+	}
 	respondWithJSON(w, http.StatusCreated, td)
 }
 

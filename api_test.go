@@ -76,7 +76,7 @@ func TestApplication_getToDoItem_not_found(t *testing.T) {
 	router := mux.NewRouter()
 
 	db := new(MockDatabase)
-	db.On("getItem", uint(1)).Return(*new(Item), errors.New("Not found"))
+	db.On("getItem", uint(1)).Return(*new(Item), &ErrorItemNotFound{Id: 1})
 
 	app := &Application{db: db, router: router}
 	app.initRoutes()
@@ -94,6 +94,30 @@ func TestApplication_getToDoItem_not_found(t *testing.T) {
 	err = json.NewDecoder(rr.Body).Decode(responseItem)
 	assert.NoError(t, err)
 	assert.Equal(t, "item not found", responseItem.Error)
+}
+
+func TestApplication_getToDoItem_db_error(t *testing.T) {
+	router := mux.NewRouter()
+
+	db := new(MockDatabase)
+	db.On("getItem", uint(1)).Return(*new(Item), errors.New("db error"))
+
+	app := &Application{db: db, router: router}
+	app.initRoutes()
+
+	req, err := http.NewRequest("GET", "/todo/1", nil)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	responseItem := &errorMessage{}
+	err = json.NewDecoder(rr.Body).Decode(responseItem)
+	assert.NoError(t, err)
+	assert.Equal(t, "Database error occurred", responseItem.Error)
 }
 
 func TestApplication_getAllToDoItems(t *testing.T) {
@@ -133,6 +157,36 @@ func TestApplication_getAllToDoItems(t *testing.T) {
 	assert.Equal(t, uint(3), responseItems[2].Id)
 	assert.Equal(t, "C", responseItems[2].Description)
 	assert.True(t, responseItems[2].Completed)
+}
+
+func TestApplication_getAllToDoItems_db_error(t *testing.T) {
+	router := mux.NewRouter()
+
+	db := new(MockDatabase)
+
+	items := make([]Item, 3)
+	items[0] = Item{Description: "A", Completed: true, Id: 1}
+	items[1] = Item{Description: "B", Completed: false, Id: 2}
+	items[2] = Item{Description: "C", Completed: true, Id: 3}
+
+	db.On("allItems").Return(items, errors.New("db error"))
+
+	app := &Application{db: db, router: router}
+	app.initRoutes()
+
+	req, err := http.NewRequest("GET", "/todos", nil)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	responseItem := &errorMessage{}
+	err = json.NewDecoder(rr.Body).Decode(responseItem)
+	assert.NoError(t, err)
+	assert.Equal(t, "Database error occurred", responseItem.Error)
 }
 
 func TestApplication_deleteToDoItem(t *testing.T) {
@@ -189,7 +243,7 @@ func TestApplication_deleteToDoItem_not_found(t *testing.T) {
 	router := mux.NewRouter()
 
 	db := new(MockDatabase)
-	db.On("deleteItem", uint(1)).Return(errors.New("Not found"))
+	db.On("deleteItem", uint(1)).Return(&ErrorItemNotFound{})
 
 	app := &Application{db: db, router: router}
 	app.initRoutes()
@@ -207,6 +261,30 @@ func TestApplication_deleteToDoItem_not_found(t *testing.T) {
 	err = json.NewDecoder(rr.Body).Decode(responseItem)
 	assert.NoError(t, err)
 	assert.Equal(t, "item not found", responseItem.Error)
+}
+
+func TestApplication_deleteToDoItem_db_error(t *testing.T) {
+	router := mux.NewRouter()
+
+	db := new(MockDatabase)
+	db.On("deleteItem", uint(1)).Return(errors.New("db error"))
+
+	app := &Application{db: db, router: router}
+	app.initRoutes()
+
+	req, err := http.NewRequest("DELETE", "/todo/1", nil)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	responseItem := &errorMessage{}
+	err = json.NewDecoder(rr.Body).Decode(responseItem)
+	assert.NoError(t, err)
+	assert.Equal(t, "Database error occurred", responseItem.Error)
 }
 
 func TestApplication_updateToDoItem(t *testing.T) {
@@ -266,7 +344,7 @@ func TestApplication_updateToDoItem_not_found(t *testing.T) {
 
 	db := new(MockDatabase)
 	item := Item{Description: "ABC", Completed: true, Id: uint(1)}
-	db.On("updateItem", uint(1), mock.AnythingOfType("Item")).Return(Item{}, errors.New("Not found"))
+	db.On("updateItem", uint(1), mock.AnythingOfType("Item")).Return(Item{}, &ErrorItemNotFound{})
 
 	app := &Application{db: db, router: router}
 	app.initRoutes()
@@ -286,6 +364,33 @@ func TestApplication_updateToDoItem_not_found(t *testing.T) {
 	err = json.NewDecoder(rr.Body).Decode(responseItem)
 	assert.NoError(t, err)
 	assert.Equal(t, "item not found", responseItem.Error)
+}
+
+func TestApplication_updateToDoItem_db_error(t *testing.T) {
+	router := mux.NewRouter()
+
+	db := new(MockDatabase)
+	item := Item{Description: "ABC", Completed: true, Id: uint(1)}
+	db.On("updateItem", uint(1), mock.AnythingOfType("Item")).Return(Item{}, errors.New("db error"))
+
+	app := &Application{db: db, router: router}
+	app.initRoutes()
+
+	b := new(bytes.Buffer)
+	json.NewEncoder(b).Encode(item)
+	req, err := http.NewRequest("PUT", "/todo/1", b)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	responseItem := &errorMessage{}
+	err = json.NewDecoder(rr.Body).Decode(responseItem)
+	assert.NoError(t, err)
+	assert.Equal(t, "Database error occurred", responseItem.Error)
 }
 
 func TestApplication_updateToDoItem_invalid_json(t *testing.T) {
@@ -365,4 +470,31 @@ func TestApplication_createToDoItem_invalid_json(t *testing.T) {
 	err = json.NewDecoder(rr.Body).Decode(responseItem)
 	assert.NoError(t, err)
 	assert.Equal(t, "Invalid request payload", responseItem.Error)
+}
+
+func TestApplication_createToDoItem_db_error(t *testing.T) {
+	router := mux.NewRouter()
+
+	db := new(MockDatabase)
+	item := Item{Description: "ABC", Completed: true, Id: uint(1)}
+	db.On("createItem", item).Return(Item{}, errors.New("db error"))
+
+	app := &Application{db: db, router: router}
+	app.initRoutes()
+
+	b := new(bytes.Buffer)
+	json.NewEncoder(b).Encode(item)
+	req, err := http.NewRequest("POST", "/todo", b)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	responseItem := &errorMessage{}
+	err = json.NewDecoder(rr.Body).Decode(responseItem)
+	assert.NoError(t, err)
+	assert.Equal(t, "Database error occurred", responseItem.Error)
 }

@@ -10,7 +10,7 @@ type MockDatabase struct {
 }
 
 // allItems provides a mock function with given fields:
-func (_m *MockDatabase) allItems() []Item {
+func (_m *MockDatabase) allItems() ([]Item, error) {
 	ret := _m.Called()
 
 	var r0 []Item
@@ -22,7 +22,14 @@ func (_m *MockDatabase) allItems() []Item {
 		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // close provides a mock function with given fields:
@@ -31,7 +38,7 @@ func (_m *MockDatabase) close() {
 }
 
 // createItem provides a mock function with given fields: item
-func (_m *MockDatabase) createItem(item Item) Item {
+func (_m *MockDatabase) createItem(item Item) (Item, error) {
 	ret := _m.Called(item)
 
 	var r0 Item
@@ -41,7 +48,14 @@ func (_m *MockDatabase) createItem(item Item) Item {
 		r0 = ret.Get(0).(Item)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(Item) error); ok {
+		r1 = rf(item)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // deleteItem provides a mock function with given fields: id

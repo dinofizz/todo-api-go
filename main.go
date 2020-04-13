@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/gorilla/mux"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"log"
 	"net/http"
 	"os"
