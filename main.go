@@ -5,6 +5,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -16,9 +17,11 @@ func main() {
 	app := &Application{db: db, router: router}
 	app.initRoutes()
 
+	address := os.Getenv("HOST_ADDRESS")
+	log.Printf("Starting web server on %s\n", address)
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         "127.0.0.1:8000",
+		Addr:         address,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
