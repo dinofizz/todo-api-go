@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 type Application struct {
@@ -23,13 +22,7 @@ func (a *Application) initRoutes() {
 
 func (a *Application) getToDoItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 64)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid ToDo item ID")
-		return
-	}
-
-	item, err := a.db.getItem(uint(id))
+	item, err := a.db.getItem(vars["id"])
 	var e *ErrorItemNotFound
 	if errors.As(err, &e) {
 		respondWithError(w, http.StatusNotFound, "item not found")
@@ -52,13 +45,7 @@ func (a *Application) getAllToDoItems(w http.ResponseWriter, r *http.Request) {
 
 func (a *Application) deleteToDoItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 64)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid ToDo item ID")
-		return
-	}
-
-	err = a.db.deleteItem(uint(id))
+	err := a.db.deleteItem(vars["id"])
 
 	var e *ErrorItemNotFound
 	if errors.As(err, &e) {
@@ -73,11 +60,6 @@ func (a *Application) deleteToDoItem(w http.ResponseWriter, r *http.Request) {
 
 func (a *Application) updateToDoItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 64)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid ToDo item ID")
-		return
-	}
 	var td Item
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&td); err != nil {
@@ -86,7 +68,7 @@ func (a *Application) updateToDoItem(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	updatedItem, err := a.db.updateItem(uint(id), td)
+	updatedItem, err := a.db.updateItem(vars["id"], td)
 	var e *ErrorItemNotFound
 	if errors.As(err, &e) {
 		respondWithError(w, http.StatusNotFound, "item not found")

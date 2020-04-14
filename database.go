@@ -12,7 +12,7 @@ type GormItem struct {
 }
 
 type Item struct {
-	Id          uint
+	Id          string
 	Description string
 	Completed   bool
 }
@@ -20,18 +20,18 @@ type Item struct {
 type Database interface {
 	init()
 	createItem(item Item) (Item, error)
-	deleteItem(id uint) error
-	updateItem(id uint, td Item) (Item, error)
-	getItem(id uint) (Item, error)
+	deleteItem(id string) error
+	updateItem(id string, td Item) (Item, error)
+	getItem(id string) (Item, error)
 	allItems() ([]Item, error)
 	close()
 }
 
 type ErrorItemNotFound struct {
-	Id uint
+	Id string
 }
 
 func (e *ErrorItemNotFound) Error() string {
-	return fmt.Sprintf("Unable to find item with id %d", e.Id)
+	return fmt.Sprintf("Unable to find item with id %s", e.Id)
 }
 

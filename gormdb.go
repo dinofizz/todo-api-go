@@ -1,11 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"os"
+	"strconv"
 )
 
 type gormdb struct {
@@ -29,23 +31,32 @@ func (s *gormdb) createItem(item Item) (Item, error) {
 	if err := s.db.Create(gtd).Error; err != nil {
 		return Item{}, err
 	}
-	return Item{Description: gtd.Description, Completed: gtd.Completed, Id: gtd.ID}, nil
+	id := strconv.FormatUint(uint64(gtd.ID), 10)
+	return Item{Description: gtd.Description, Completed: gtd.Completed, Id: id}, nil
 }
 
-func (s *gormdb) updateItem(id uint, td Item) (Item, error) {
+func (s *gormdb) updateItem(id string, td Item) (Item, error) {
+	uintId, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return Item{}, errors.New("Invalid ID type.")
+	}
 	var gtd GormItem
-	if err := s.db.First(&gtd, id).Error; gorm.IsRecordNotFoundError(err) {
+	if err := s.db.First(&gtd, uintId).Error; gorm.IsRecordNotFoundError(err) {
 		return Item{}, &ErrorItemNotFound{Id: id}
 	} else if err != nil {
 		return Item{}, err
 	}
 	s.db.Model(&gtd).Update("Completed", td.Completed).Update("Description", td.Description)
-	return Item{Description: gtd.Description, Completed: gtd.Completed, Id: gtd.ID}, nil
+	return Item{Description: gtd.Description, Completed: gtd.Completed, Id: id}, nil
 }
 
-func (s *gormdb) deleteItem(id uint) error {
+func (s *gormdb) deleteItem(id string) error {
+	uintId, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return errors.New("Invalid ID type.")
+	}
 	var gtd GormItem
-	if err := s.db.First(&gtd, id).Error; gorm.IsRecordNotFoundError(err) {
+	if err := s.db.First(&gtd, uintId).Error; gorm.IsRecordNotFoundError(err) {
 		return &ErrorItemNotFound{Id: id}
 	} else if err != nil {
 		return err
@@ -54,14 +65,18 @@ func (s *gormdb) deleteItem(id uint) error {
 	return nil
 }
 
-func (s *gormdb) getItem(id uint) (Item, error) {
+func (s *gormdb) getItem(id string) (Item, error) {
+	uintId, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return Item{}, errors.New("Invalid ID type.")
+	}
 	var gtd GormItem
-	if err := s.db.First(&gtd, id).Error; gorm.IsRecordNotFoundError(err) {
+	if err := s.db.First(&gtd, uintId).Error; gorm.IsRecordNotFoundError(err) {
 		return Item{}, &ErrorItemNotFound{Id: id}
 	} else if err != nil {
 		return Item{}, err
 	}
-	return Item{Description: gtd.Description, Completed: gtd.Completed, Id: gtd.ID}, nil
+	return Item{Description: gtd.Description, Completed: gtd.Completed, Id: id}, nil
 }
 
 func (s *gormdb) allItems() ([]Item, error) {
@@ -72,7 +87,8 @@ func (s *gormdb) allItems() ([]Item, error) {
 
 	tds := make([]Item, len(gtds))
 	for i, v := range gtds {
-		tds[i] = Item{Description: v.Description, Completed: v.Completed, Id: v.ID}
+		id := strconv.FormatUint(uint64(v.ID), 10)
+		tds[i] = Item{Description: v.Description, Completed: v.Completed, Id: id}
 	}
 	return tds, nil
 }

@@ -59,11 +59,11 @@ func (_m *MockDatabase) createItem(item Item) (Item, error) {
 }
 
 // deleteItem provides a mock function with given fields: id
-func (_m *MockDatabase) deleteItem(id uint) error {
+func (_m *MockDatabase) deleteItem(id string) error {
 	ret := _m.Called(id)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uint) error); ok {
+	if rf, ok := ret.Get(0).(func(string) error); ok {
 		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
@@ -73,18 +73,18 @@ func (_m *MockDatabase) deleteItem(id uint) error {
 }
 
 // getItem provides a mock function with given fields: id
-func (_m *MockDatabase) getItem(id uint) (Item, error) {
+func (_m *MockDatabase) getItem(id string) (Item, error) {
 	ret := _m.Called(id)
 
 	var r0 Item
-	if rf, ok := ret.Get(0).(func(uint) Item); ok {
+	if rf, ok := ret.Get(0).(func(string) Item); ok {
 		r0 = rf(id)
 	} else {
 		r0 = ret.Get(0).(Item)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint) error); ok {
+	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
@@ -99,18 +99,18 @@ func (_m *MockDatabase) init() {
 }
 
 // updateItem provides a mock function with given fields: id, td
-func (_m *MockDatabase) updateItem(id uint, td Item) (Item, error) {
+func (_m *MockDatabase) updateItem(id string, td Item) (Item, error) {
 	ret := _m.Called(id, td)
 
 	var r0 Item
-	if rf, ok := ret.Get(0).(func(uint, Item) Item); ok {
+	if rf, ok := ret.Get(0).(func(string, Item) Item); ok {
 		r0 = rf(id, td)
 	} else {
 		r0 = ret.Get(0).(Item)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint, Item) error); ok {
+	if rf, ok := ret.Get(1).(func(string, Item) error); ok {
 		r1 = rf(id, td)
 	} else {
 		r1 = ret.Error(1)
