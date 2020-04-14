@@ -9,7 +9,8 @@ import (
 )
 
 func main() {
-	db := &gormdb{}
+	//db := &gormdb{}
+	db := &mongodb{}
 	db.init()
 	defer db.close()
 	router := mux.NewRouter()
