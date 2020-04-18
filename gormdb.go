@@ -16,7 +16,14 @@ type gormdb struct {
 
 func (s *gormdb) init() {
 	dialect := os.Getenv("GORM_DIALECT")
-	connectionString := os.Getenv("GORM_CONNECTION_STRING")
+	if dialect == "" {
+		panic(fmt.Sprint("Missing value for GORM_DIALECT environment variable."))
+	}
+	connectionString := os.Getenv("CONNECTION_STRING")
+	if connectionString == "" {
+		panic(fmt.Sprint("Missing value for CONNECTION_STRING environment variable."))
+	}
+
 	gormdb, err := gorm.Open(dialect, connectionString)
 	if err != nil {
 		fmt.Println(err)

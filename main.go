@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -9,8 +10,24 @@ import (
 )
 
 func main() {
-	//db := &gormdb{}
-	db := &mongodb{}
+	dbType := flag.String("db", "", "Database to use. Options are: \"sqlite3\", \"mysql\" and \"mongo\"")
+	flag.Parse()
+	a := flag.Args()
+
+	if len(a) != 0 {
+		log.Fatalf("Uknown argument: %s", a[0])
+	}
+
+	var db Database
+	if *dbType == "mongo" {
+		db = &mongodb{}
+	} else if *dbType == "sqlite3" || *dbType == "mysql" {
+		db = &gormdb{}
+	} else {
+		flag.Usage()
+		log.Fatal("Please specify a valid database to use.")
+	}
+
 	db.init()
 	defer db.close()
 	router := mux.NewRouter()

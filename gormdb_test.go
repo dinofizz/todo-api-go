@@ -9,7 +9,7 @@ import (
 
 func initOsEnv() {
 	os.Setenv("GORM_DIALECT", "sqlite3")
-	os.Setenv("GORM_CONNECTION_STRING", ":memory:")
+	os.Setenv("CONNECTION_STRING", ":memory:")
 }
 
 func initDB() *gormdb {
@@ -24,6 +24,36 @@ func Test_init(t *testing.T) {
 	defer db.close()
 }
 
+func Test_init_missing_dialect(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	os.Unsetenv("GORM_DIALECT")
+	os.Setenv("CONNECTION_STRING", ":unknown:")
+	defer os.Unsetenv("CONNECTION_STRING")
+	db := &gormdb{}
+	db.init()
+	defer db.close()
+}
+
+func Test_init_missing_connection_string(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	os.Unsetenv("CONNECTION_STRING")
+	os.Setenv("GORM_DIALECT", "some_other_db")
+	defer os.Unsetenv("GORM_DIALECT")
+	db := &gormdb{}
+	db.init()
+	defer db.close()
+}
+
 func Test_init_error(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -32,7 +62,9 @@ func Test_init_error(t *testing.T) {
 	}()
 
 	os.Setenv("GORM_DIALECT", "some_other_db")
-	os.Setenv("GORM_CONNECTION_STRING", ":unknown:")
+	defer os.Unsetenv("GORM_DIALECT")
+	os.Setenv("CONNECTION_STRING", ":unknown:")
+	defer os.Unsetenv("CONNECTION_STRING")
 	db := &gormdb{}
 	db.init()
 	defer db.close()
