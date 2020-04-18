@@ -4,26 +4,21 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
-	"os"
 )
 
 type mongodb struct {
 	client     *mongo.Client
 	collection *mongo.Collection
+	connectionString string
 }
 
 func (m *mongodb) init() {
-	connectionString := os.Getenv("CONNECTION_STRING")
-	if connectionString == "" {
-		panic(fmt.Sprint("Missing value for CONNECTION_STRING environment variable."))
-	}
-	clientOptions := options.Client().ApplyURI(connectionString)
+	clientOptions := options.Client().ApplyURI(m.connectionString)
 	var err error
 	m.client, err = mongo.Connect(context.TODO(), clientOptions)
 

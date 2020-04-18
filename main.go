@@ -20,9 +20,17 @@ func main() {
 
 	var db Database
 	if *dbType == "mongo" {
-		db = &mongodb{}
+		connectionString := os.Getenv("CONNECTION_STRING")
+		if connectionString == "" {
+			log.Fatal("Missing value for CONNECTION_STRING environment variable.")
+		}
+		db = &mongodb{connectionString: connectionString}
 	} else if *dbType == "sqlite3" || *dbType == "mysql" {
-		db = &gormdb{}
+		connectionString := os.Getenv("CONNECTION_STRING")
+		if connectionString == "" {
+			log.Fatal("Missing value for CONNECTION_STRING environment variable.")
+		}
+		db = &gormdb{dialect: *dbType, connectionString: connectionString}
 	} else {
 		flag.Usage()
 		log.Fatal("Please specify a valid database to use.")

@@ -6,28 +6,20 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"os"
 	"strconv"
 )
 
 type gormdb struct {
 	db *gorm.DB
+	dialect string
+	connectionString string
 }
 
 func (s *gormdb) init() {
-	dialect := os.Getenv("GORM_DIALECT")
-	if dialect == "" {
-		panic(fmt.Sprint("Missing value for GORM_DIALECT environment variable."))
-	}
-	connectionString := os.Getenv("CONNECTION_STRING")
-	if connectionString == "" {
-		panic(fmt.Sprint("Missing value for CONNECTION_STRING environment variable."))
-	}
-
-	gormdb, err := gorm.Open(dialect, connectionString)
+	gormdb, err := gorm.Open(s.dialect, s.connectionString)
 	if err != nil {
 		fmt.Println(err)
-		panic(fmt.Sprintf("failed to connect to %s Database with connection string %s", dialect, connectionString))
+		panic(fmt.Sprintf("failed to connect to %s Database with connection string %s", s.dialect, s.connectionString))
 	}
 	s.db = gormdb
 	s.db.AutoMigrate(&GormItem{})
