@@ -9,5 +9,5 @@ RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 WORKDIR /app
 COPY --from=build-env /app/todo-api /app
 
-ENTRYPOINT ./todo-api
+ENTRYPOINT ["./todo-api"]
 
