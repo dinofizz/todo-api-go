@@ -13,6 +13,8 @@ type Application struct {
 }
 
 func (a *Application) initRoutes() {
+	a.router.HandleFunc("/live", a.health).Methods("GET")
+	a.router.HandleFunc("/ready", a.health).Methods("GET")
 	a.router.HandleFunc("/todo", a.createTodoItem).Methods("POST")
 	a.router.HandleFunc("/todos", a.getAllToDoItems).Methods("GET")
 	a.router.HandleFunc("/todo/{id}", a.getToDoItem).Methods("GET")
@@ -95,6 +97,16 @@ func (a *Application) createTodoItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusCreated, td)
+}
+
+func (a *Application) health(w http.ResponseWriter, r *http.Request) {
+	// Using allItems as a proxy for app health and readiness check
+	_, err := a.db.allItems()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error occurred.")
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {

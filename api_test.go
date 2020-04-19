@@ -429,3 +429,32 @@ func TestApplication_createToDoItem_db_error(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Database error occurred", responseItem.Error)
 }
+
+func TestApplication_health_live(t *testing.T) {
+	items := make([]Item, 0)
+	var healthTests = []struct {
+		url        string
+		items      []Item
+		e          error
+		statusCode int
+	}{
+		{"/live", items, nil, http.StatusNoContent},
+		{"/live", items, errors.New("Some error"), http.StatusInternalServerError},
+		{"/ready", items, nil, http.StatusNoContent},
+		{"/ready", items, errors.New("Some error"), http.StatusInternalServerError},
+	}
+
+	for _, tt := range healthTests {
+		t.Run(tt.url, func(t *testing.T) {
+			router := mux.NewRouter()
+			db := new(MockDatabase)
+			app := &Application{db: db, router: router}
+			app.initRoutes()
+			db.On("allItems").Return(tt.items, tt.e)
+			req, _ := http.NewRequest("GET", tt.url, nil)
+			rr := httptest.NewRecorder()
+			router.ServeHTTP(rr, req)
+			assert.Equal(t, tt.statusCode, rr.Code)
+		})
+	}
+}
