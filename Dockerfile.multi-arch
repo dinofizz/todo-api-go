@@ -1,13 +1,12 @@
-FROM --platform=$BUILDPLATFORM golang:alpine AS build
+FROM --platform=$BUILDPLATFORM golang:buster AS build
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
-RUN apk update && apk add gcc libc-dev && rm -rf /var/cache/apk/*
+RUN apt update && apt install build-essential gcc-arm-linux-gnueabi g++-arm-linux-gnueabihf -y
 RUN echo "Building image on $BUILDPLATFORM for $TARGETPLATFORM"
 WORKDIR /app
 COPY . /app
-RUN chmod +x gobuild_multi_arch.sh
 RUN /app/gobuild_multi_arch.sh "$TARGETPLATFORM"
 
-FROM alpine
+FROM debian:buster-slim
 COPY --from=build /app/todo-api /todo-api
-ENTRYPOINT [ "./todo-api" ]
+ENTRYPOINT [ "/todo-api" ]
