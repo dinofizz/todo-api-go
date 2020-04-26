@@ -3,24 +3,24 @@ kind: Deployment
 metadata:
   name: {{ include "todo.fullname" . }}
   labels:
-    {{- include "todo.labels" . | nindent 4 }}
+  {{- include "todo.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "todo.selectorLabels" . | nindent 6 }}
+  {{- include "todo.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "todo.selectorLabels" . | nindent 8 }}
+    {{- include "todo.selectorLabels" . | nindent 8 }}
     spec:
-    {{- with .Values.imagePullSecrets }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ include "todo.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
         - name: db-pv-storage
           persistentVolumeClaim:
@@ -28,7 +28,7 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
@@ -47,6 +47,8 @@ spec:
               protocol: TCP
           livenessProbe:
             initialDelaySeconds: 5
+            failureThreshold: 1
+            periodSeconds: 5
             httpGet:
               path: /live
               port: http
@@ -56,18 +58,18 @@ spec:
               path: /ready
               port: http
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+          {{- toYaml .Values.resources | nindent 12 }}
           command: ["/todo-api"]
           args: ["--db", "$(DB)"]
       {{- with .Values.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
+      {{- toYaml . | nindent 8 }}
       {{- end }}
-    {{- with .Values.affinity }}
+      {{- with .Values.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
