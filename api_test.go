@@ -353,14 +353,15 @@ func TestApplication_createToDoItem(t *testing.T) {
 	router := mux.NewRouter()
 
 	db := new(MockDatabase)
-	item := Item{Description: "ABC", Completed: true, Id: "1"}
-	db.On("createItem", item).Return(item, nil)
+	requestItem := Item{Description: "ABC", Completed: true}
+	returnItem := Item{Description: "ABC", Completed: true, Id: "1"}
+	db.On("createItem", requestItem).Return(returnItem, nil)
 
 	app := &Application{db: db, router: router}
 	app.initRoutes()
 
 	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(item)
+	json.NewEncoder(b).Encode(requestItem)
 	req, err := http.NewRequest("POST", "/todo", b)
 	assert.NoError(t, err)
 
@@ -373,9 +374,9 @@ func TestApplication_createToDoItem(t *testing.T) {
 	responseItem := &Item{}
 	err = json.NewDecoder(rr.Body).Decode(responseItem)
 	assert.NoError(t, err)
-	assert.Equal(t, "1", item.Id)
-	assert.Equal(t, "ABC", item.Description)
-	assert.Equal(t, true, item.Completed)
+	assert.Equal(t, "1", responseItem.Id)
+	assert.Equal(t, "ABC", responseItem.Description)
+	assert.Equal(t, true, responseItem.Completed)
 }
 
 func TestApplication_createToDoItem_invalid_json(t *testing.T) {
