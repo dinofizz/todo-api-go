@@ -21,22 +21,26 @@ spec:
       serviceAccountName: {{ include "todo.serviceAccountName" . }}
       securityContext:
       {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if eq .Values.db.type "sqlite3" }}
       volumes:
         - name: db-pv-storage
           persistentVolumeClaim:
             claimName: db-pv-claim
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if eq .Values.db.type "sqlite3" }}
           volumeMounts:
             - mountPath: {{ .Values.storage.containerPath }}
               name: db-pv-storage
+          {{- end }}
           env:
             - name: CONNECTION_STRING
-              value: "{{ .Values.storage.containerPath }}/{{ .Values.db.sqliteDbFilename }}"
+              value: {{ .Values.db.connectionString }}
             - name: HOST_ADDRESS
               value: "{{ .Values.app.host }}:{{ .Values.app.port }}"
             - name: DB
@@ -46,7 +50,7 @@ spec:
               containerPort: {{ .Values.app.port }}
               protocol: TCP
           livenessProbe:
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             failureThreshold: 1
             periodSeconds: 5
             httpGet:

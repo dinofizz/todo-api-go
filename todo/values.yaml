@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: dinofizz/todo-api-go
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
@@ -18,8 +18,7 @@ app:
 
 db:
   type: sqlite3
-  sqliteDbFilename: sqlite.db
-
+  connectionString: /var/db/sqlite.db
 
 storage:
   hostPath: /mnt/ssd/db
