@@ -128,7 +128,7 @@ Output:
 
 ## Multi-platform Docker images
 
-If you wish to run the ToDo API in Docker or as part of a Kubernetes deployment you will need to build a Docker image for the application. This is fairly simple for x86-based nodes, you would just build the image with an appropriate tag and push it to your repository. To use the newly built image you should change the repository details in the Helm chart `todo/values.yaml` file.
+If you wish to run the ToDo API in Docker or as part of a Kubernetes deployment you will need to build a Docker image for the application. This is fairly simple for x86-based nodes, you would just build the image using the `Dockerfile` with an appropriate tag and push it to your repository. To use the newly built image you should change the repository details in the Helm chart `todo/values.yaml` file.
 
 If you wish to run the application on a Raspberry Pi (as I am interested in doing), you will need to build an ARM compatible image. I'm doing this with the aid of the Docker [buildx](https://github.com/docker/buildx) plugin, a multi-stage Dockerfile (`Dockerfile.multi_arch`) and a helper script (`gobuild_multi_arch.sh`).
 
