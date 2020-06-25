@@ -25,6 +25,10 @@ func (s *gormdb) init() {
 	s.db.AutoMigrate(&GormItem{})
 }
 
+func (s *gormdb) ping() error {
+	return s.db.DB().Ping()
+}
+
 func (s *gormdb) createItem(item Item) (Item, error) {
 	gtd := &GormItem{Description: item.Description, Completed: item.Completed}
 	if err := s.db.Create(gtd).Error; err != nil {

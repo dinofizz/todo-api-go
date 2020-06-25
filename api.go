@@ -100,8 +100,7 @@ func (a *Application) createTodoItem(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Application) health(w http.ResponseWriter, r *http.Request) {
-	// Using allItems as a proxy for app health and readiness check
-	_, err := a.db.allItems()
+	err := a.db.ping()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error occurred.")
 	}

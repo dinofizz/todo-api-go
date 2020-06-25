@@ -1,4 +1,5 @@
 package main
+
 // Most of this is code from https://www.mongodb.com/blog/post/mongodb-go-driver-tutorial
 
 import (
@@ -12,8 +13,8 @@ import (
 )
 
 type mongodb struct {
-	client     *mongo.Client
-	collection *mongo.Collection
+	client           *mongo.Client
+	collection       *mongo.Collection
 	connectionString string
 }
 
@@ -32,6 +33,10 @@ func (m *mongodb) init() {
 	}
 
 	m.collection = m.client.Database("todo").Collection("todo_items")
+}
+
+func (m *mongodb) ping() error {
+	return m.client.Ping(context.TODO(), nil)
 }
 
 func (m *mongodb) createItem(item Item) (Item, error) {
@@ -112,8 +117,8 @@ func (m *mongodb) allItems() ([]Item, error) {
 			log.Fatal(err)
 		}
 
-	    elements, _ := cur.Current.Elements()
-	    elem.Id = elements[0].Value().ObjectID().Hex()
+		elements, _ := cur.Current.Elements()
+		elem.Id = elements[0].Value().ObjectID().Hex()
 
 		results = append(results, elem)
 	}

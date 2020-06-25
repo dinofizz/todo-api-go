@@ -432,17 +432,15 @@ func TestApplication_createToDoItem_db_error(t *testing.T) {
 }
 
 func TestApplication_health_live(t *testing.T) {
-	items := make([]Item, 0)
 	var healthTests = []struct {
 		url        string
-		items      []Item
 		e          error
 		statusCode int
 	}{
-		{"/live", items, nil, http.StatusNoContent},
-		{"/live", items, errors.New("Some error"), http.StatusInternalServerError},
-		{"/ready", items, nil, http.StatusNoContent},
-		{"/ready", items, errors.New("Some error"), http.StatusInternalServerError},
+		{"/live", nil, http.StatusNoContent},
+		{"/live", errors.New("Some error"), http.StatusInternalServerError},
+		{"/ready", nil, http.StatusNoContent},
+		{"/ready", errors.New("Some error"), http.StatusInternalServerError},
 	}
 
 	for _, tt := range healthTests {
@@ -451,7 +449,7 @@ func TestApplication_health_live(t *testing.T) {
 			db := new(MockDatabase)
 			app := &Application{db: db, router: router}
 			app.initRoutes()
-			db.On("allItems").Return(tt.items, tt.e)
+			db.On("ping").Return(tt.e)
 			req, _ := http.NewRequest("GET", tt.url, nil)
 			rr := httptest.NewRecorder()
 			router.ServeHTTP(rr, req)

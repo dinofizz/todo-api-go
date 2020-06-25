@@ -19,6 +19,7 @@ type Item struct {
 
 type Database interface {
 	init()
+	ping() error
 	createItem(item Item) (Item, error)
 	deleteItem(id string) error
 	updateItem(id string, td Item) (Item, error)
