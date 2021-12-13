@@ -1,3 +1,5 @@
+🙈 *Note: this repo does not represent my current understanding of what good Go code is - it was the second thing I ever wrote in Go*
+
 # todo-api-go
 Yet Another ToDo App - I'm using this one to learn how to build web services in Go (and to play with Kubernetes on my Pi Cluster).
 
